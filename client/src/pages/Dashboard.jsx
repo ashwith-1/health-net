@@ -17,7 +17,7 @@ import {
 import Map, { Marker } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const socket = io("https://health-net-bona.onrender.com");
+const socket = io("https://health-net-8pna.onrender.com");
 
 export default function Dashboard() {
 
