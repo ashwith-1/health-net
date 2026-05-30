@@ -17,7 +17,7 @@ import {
 import Map, { Marker } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://health-net-bona.onrender.com");
 
 export default function Dashboard() {
 
@@ -204,13 +204,14 @@ export default function Dashboard() {
   );
 
   return (
+
     <div className="min-h-screen flex bg-gradient-to-br from-[#020617] via-[#052e2b] to-black text-white">
 
       {/* SIDEBAR */}
       <div className="w-72 bg-black/40 p-6 border-r border-emerald-500/20">
 
         <h1 className="text-2xl font-bold text-emerald-400 mb-8">
-          🏥 HealthNet ICU
+          🏥 HealthNet 
         </h1>
 
         {["dashboard", "alerts", "insurance", "relatives", "map", "notifications"].map((item) => (

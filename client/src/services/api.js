@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://health-net-bona.onrender.com",
 });
 
 // ================= TOKEN ATTACH =================
