@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://health-net-8pna.onrender.com/auth",
+  baseURL: "https://health-net-8pna.onrender.com",
 });
 
 // ================= TOKEN ATTACH =================
