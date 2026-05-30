@@ -1,6 +1,6 @@
 const Relative = require("../models/Relative");
 
-// ================= ADD =================
+// ================= ADD RELATIVE =================
 exports.addRelative = async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -20,11 +20,14 @@ exports.addRelative = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };
 
-// ================= GET =================
+// ================= GET RELATIVES =================
 exports.getRelatives = async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -37,17 +40,18 @@ exports.getRelatives = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };
 
 // ================= UPDATE =================
 exports.updateRelative = async (req, res) => {
   try {
-    const { id } = req.params;
-
     const updated = await Relative.findByIdAndUpdate(
-      id,
+      req.params.id,
       req.body,
       { new: true }
     );
@@ -58,23 +62,27 @@ exports.updateRelative = async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };
 
 // ================= DELETE =================
 exports.deleteRelative = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    await Relative.findByIdAndDelete(id);
+    await Relative.findByIdAndDelete(req.params.id);
 
     res.json({
       success: true,
-      message: "Deleted successfully"
+      message: "Deleted"
     });
 
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };

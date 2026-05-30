@@ -1,126 +1,73 @@
 const Hospital = require("../models/Hospital");
 const sendEmail = require("../utils/sendEmail");
 
-// 🏥 GET ALL HOSPITALS
+// ================= GET HOSPITALS =================
 exports.getHospitals = async (req, res) => {
-
   try {
-
     const hospitals = await Hospital.find();
 
-    res.status(200).json({
+    res.json({
       success: true,
-      count: hospitals.length,
-      hospitals,
+      hospitals
     });
 
   } catch (err) {
-
     res.status(500).json({
       success: false,
-      message: err.message,
+      message: err.message
     });
   }
 };
 
-// 🏥 ADD HOSPITAL
+// ================= ADD HOSPITAL =================
 exports.addHospital = async (req, res) => {
-
   try {
-
-    const {
-      name,
-      email,
-      latitude,
-      longitude,
-    } = req.body;
-
-    if (!name || !email) {
-
-      return res.status(400).json({
-        success: false,
-        message: "Name and email required",
-      });
-    }
-
-    const hospital = await Hospital.create({
-      name,
-      email,
-      latitude,
-      longitude,
-    });
+    const hospital = await Hospital.create(req.body);
 
     res.status(201).json({
       success: true,
-      message: "Hospital added successfully",
-      hospital,
+      hospital
     });
 
   } catch (err) {
-
     res.status(500).json({
       success: false,
-      message: err.message,
+      message: err.message
     });
   }
 };
 
-// 🚨 SEND EMERGENCY EMAIL TO ALL HOSPITALS
+// ================= MANUAL ALERT =================
 exports.sendHospitalAlerts = async (req, res) => {
-
   try {
-
     const { message } = req.body;
-
-    if (!message) {
-
-      return res.status(400).json({
-        success: false,
-        message: "Message required",
-      });
-    }
 
     const hospitals = await Hospital.find();
 
-    for (const hospital of hospitals) {
-
-      if (hospital.email) {
-
+    for (const h of hospitals) {
+      if (h.email) {
         try {
-
           await sendEmail(
+            h.email,
+            `🚨 Emergency Alert
 
-            hospital.email,
-
-            `🚨 Emergency Patient Alert
-
-${message}
-
-🏥 Immediate medical support may be required.
-
-- HealthNet ICU AI System`
+${message}`
           );
-
         } catch (err) {
-
-          console.log(
-            "Hospital email failed:",
-            hospital.email
-          );
+          console.log("Failed:", h.email);
         }
       }
     }
 
-    res.status(200).json({
+    res.json({
       success: true,
-      message: "Hospital alerts sent",
+      message: "Sent to hospitals"
     });
 
   } catch (err) {
-
     res.status(500).json({
       success: false,
-      message: err.message,
+      message: err.message
     });
   }
 };

@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState([]);
   const [insurance, setInsurance] = useState([]);
   const [relatives, setRelatives] = useState([]);
-
+const [notifications, setNotifications] = useState([]);
   const [tab, setTab] = useState("dashboard");
   const [dark, setDark] = useState(true);
 
@@ -52,13 +52,23 @@ export default function Dashboard() {
       const [h, a, r] = await Promise.all([
         API.get(`/api/health/${patientId}`),
         API.get(`/api/alerts/${patientId}`),
-        API.get(`/api/relatives/${patientId}`)
+        API.get(`/api/relatives/${patientId}`),
+        
+       
       ]);
+      
 
       setHealth(h.data?.data || []);
       setAlerts(a.data?.alerts || []);
       setRelatives(r.data?.relatives || []);
+      let n = { data: { data: [] } };
 
+try {
+  n = await API.get(`/api/notifications/${patientId}`);
+} catch (err) {
+  console.log("Notifications API not ready yet");
+}
+      setNotifications(n.data?.data || []);
       generateInsurance(h.data?.data || []);
     } catch (e) {
       console.log("FETCH ERROR:", e);
@@ -73,7 +83,7 @@ export default function Dashboard() {
         heartbeat: 60 + Math.random() * 60,
         spo2: 85 + Math.random() * 15,
         sugar: 90 + Math.random() * 120,
-        bp: "120/80"
+        bp: `${110 + Math.floor(Math.random() * 20)}/${70 + Math.floor(Math.random() * 15)}`
       });
     } catch (e) {
       console.log(e);
@@ -112,21 +122,42 @@ export default function Dashboard() {
   }, []);
 
   // ================= SOCKET =================
-  useEffect(() => {
-    socket.on("new-alert", (data) => {
-      toast.error("🚨 Emergency Alert Received!");
-      setAlerts(prev => [data, ...prev]);
+ useEffect(() => {
+
+  socket.on("new-alert", async (data) => {
+
+    toast.error("🚨 Emergency Alert Received!");
+
+    // store alert
+    setAlerts(prev => [data, ...prev]);
+
+    // 🔥 STORE NOTIFICATION
+    await API.post("/api/notifications", {
+      patientId,
+      message: data.message,
+      type: "ALERT",
+      time: new Date()
     });
 
-    return () => socket.off("new-alert");
-  }, []);
+    // 📧 EMAIL TRIGGER (IMPORTANT)
+    await API.post("/api/send-alert-email", {
+      patientId,
+      message: data.message
+    });
+
+  });
+
+  return () => socket.off("new-alert");
+
+}, []);
 
   // ================= CHART =================
   const chart = health.map(h => ({
     time: new Date(h.createdAt).toLocaleTimeString(),
     heartbeat: h.heartbeat,
     spo2: h.spo2,
-    sugar: h.sugar
+    sugar: h.sugar,
+    bp: h.bp ? parseInt(h.bp.split("/")[0]) : 0
   }));
 
   // ================= ADD RELATIVE (FIXED) =================
@@ -240,22 +271,16 @@ export default function Dashboard() {
 
           <div className="flex gap-3">
 
-            <button
-              onClick={() => setDark(!dark)}
-              className="px-4 py-2 bg-emerald-500 text-black rounded-xl"
-            >
-              Theme
-            </button>
+           <button onClick={() => setDark(!dark)}>
+  Theme
+</button>
 
-            <button
-              onClick={() => {
-                localStorage.clear();
-                window.location.href = "/login";
-              }}
-              className="px-4 py-2 bg-red-500 rounded-xl"
-            >
-              Logout
-            </button>
+            <button onClick={() => {
+  localStorage.clear();
+  window.location.href = "/login";
+}}>
+  Logout
+</button>
 
           </div>
 
@@ -265,34 +290,50 @@ export default function Dashboard() {
         {tab === "dashboard" && (
           <div className="space-y-6">
 
-            <div className="grid md:grid-cols-3 gap-5">
-              <div className="p-6 bg-black/40 rounded-xl border border-red-500/30">
-                ❤️ Heart: {health[0]?.heartbeat || "--"}
-              </div>
-              <div className="p-6 bg-black/40 rounded-xl border border-blue-500/30">
-                🫁 SPO2: {health[0]?.spo2 || "--"}
-              </div>
-              <div className="p-6 bg-black/40 rounded-xl border border-green-500/30">
-                🍬 Sugar: {health[0]?.sugar || "--"}
-              </div>
-            </div>
+            <div className="grid grid-cols-4 gap-5">
+  <div className="p-6 bg-black/40 rounded-xl border border-red-500/30">
+    ❤️ Heart: {health[0]?.heartbeat || "--"}
+  </div>
+
+  <div className="p-6 bg-black/40 rounded-xl border border-blue-500/30">
+    🫁 SPO2: {health[0]?.spo2 || "--"}
+  </div>
+
+  <div className="p-6 bg-black/40 rounded-xl border border-green-500/30">
+    🍬 Sugar: {health[0]?.sugar || "--"}
+  </div>
+
+  <div className="p-6 bg-black/40 rounded-xl border border-orange-500/30">
+    🩸 BP: {health[0]?.bp || "--"}
+  </div>
+</div>
 
             <div className="bg-black/40 p-6 rounded-xl border border-emerald-500/20">
-              <ResponsiveContainer width="100%" height={320}>
-                <LineChart data={chart}>
-                  <CartesianGrid stroke="#1f2937" />
-                  <XAxis dataKey="time" stroke="#aaa" />
-                  <YAxis stroke="#aaa" />
-                  <Tooltip />
-                  <Legend />
+              <ResponsiveContainer width="100%" height={370}>
+              <LineChart data={chart}>
+  <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
 
-                  <Line type="monotone" dataKey="heartbeat" stroke="#ef4444" strokeWidth={3} />
-                  <Line type="monotone" dataKey="spo2" stroke="#3b82f6" strokeWidth={3} />
-                  <Line type="monotone" dataKey="sugar" stroke="#22c55e" strokeWidth={3} />
-                </LineChart>
+  <XAxis dataKey="time" hide />
+  <YAxis hide />
+  <Tooltip />
+<Line type="monotone" dataKey="heartbeat" stroke="#ef4444" strokeWidth={2} dot={false} />
+<Line type="monotone" dataKey="spo2" stroke="#3b82f6" strokeWidth={2} dot={false} />
+<Line type="natural" dataKey="sugar" stroke="#22c55e" strokeWidth={2} dot={false} />
+<Line type="basis" dataKey="bp" stroke="#f97316" strokeWidth={2} dot={false} />
+</LineChart>
               </ResponsiveContainer>
             </div>
+             <div className="mt-10 p-4 bg-emerald-500/20 rounded-xl border border-emerald-400 text-center">
 
+  💚 HEALTH STATUS ACTIVE MONITORING  
+   </div>
+  <div className="mt-10 p-4 bg-emerald-500/20 rounded-xl border border-emerald-400 text-center">
+  🧘 Stay calm — AI is tracking everything  
+
+</div>
+ <div className="mt-10 p-4 bg-emerald-500/20 rounded-xl border border-emerald-400 text-center">
+ 💪 Your safety is our highest priority
+ </div>
           </div>
         )}
 
@@ -352,6 +393,17 @@ export default function Dashboard() {
                 {i.reason}
               </div>
             ))}
+
+            {tab === "notifications" && (
+  <div>
+    {notifications.map((n, i) => (
+      <div key={i} className="p-3 bg-black/40 rounded-xl mb-2">
+        📩 {n.message} <br />
+        ⏱️ {new Date(n.time).toLocaleTimeString()}
+      </div>
+    ))}
+  </div>
+)}
           </div>
         )}
 
