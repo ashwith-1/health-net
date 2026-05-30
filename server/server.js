@@ -6,27 +6,34 @@ const dotenv = require("dotenv");
 const http = require("http");
 const { Server } = require("socket.io");
 
+// routes
 const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const relativeRoutes = require("./routes/relativeRoutes");
 const healthRoutes = require("./routes/healthRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const insuranceRoutes = require("./routes/insuranceRouter");
-const emailRoutes=require("./routes/email.routes");
+const emailRoutes = require("./routes/email.routes");
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// 🔥 FIX 1: CORS (IMPORTANT FOR VERCEL FRONTEND)
+app.use(cors({
+  origin: "*",
+  credentials: true
+}));
+
 app.use(express.json());
 
-// 🟢 CREATE HTTP SERVER
+// 🟢 HTTP SERVER
 const server = http.createServer(app);
 
-// 🟢 SOCKET SETUP
+// 🟢 SOCKET FIX (IMPORTANT FOR PRODUCTION)
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -44,7 +51,10 @@ app.use("/api/relatives", relativeRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/insurance", insuranceRoutes);
-app.use("api/email", emailRoutes);
+
+// 🔥 FIX 2: missing slash bug corrected
+app.use("/api/email", emailRoutes);
+
 app.use("/api/hospitals", require("./routes/hospitalRoutes"));
 
 // 🟢 DB CONNECT
@@ -53,6 +63,8 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.log(err));
 
 // 🟢 START SERVER
-server.listen(5000, () => {
-  console.log("Server Running on 5000");
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
