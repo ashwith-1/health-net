@@ -50,9 +50,9 @@ export default function Dashboard() {
   const fetchAll = async () => {
     try {
       const [h, a, r] = await Promise.all([
-        API.get(`/health/${patientId}`),
-        API.get(`/alerts/${patientId}`),
-        API.get(`/relatives/${patientId}`)
+        API.get(`/api/health/${patientId}`),
+        API.get(`/api/alerts/${patientId}`),
+        API.get(`/api/relatives/${patientId}`)
       ]);
 
       setHealth(h.data?.data || []);
@@ -68,7 +68,7 @@ export default function Dashboard() {
   // ================= HEALTH PUSH =================
   const pushHealth = async () => {
     try {
-      await API.post("/health", {
+      await API.post("/api/health", {
         patientId,
         heartbeat: 60 + Math.random() * 60,
         spo2: 85 + Math.random() * 15,
@@ -141,7 +141,7 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await API.post(`/relatives/${patientId}`, {
+      const res = await API.post(`/api/relatives/${patientId}`, {
         name,
         phone,
         email
@@ -164,7 +164,7 @@ export default function Dashboard() {
     if (!message) return;
 
     try {
-      await API.post("/send-message", {
+      await API.post("/api/send-message", {
         email,
         message
       });

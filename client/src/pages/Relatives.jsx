@@ -7,6 +7,7 @@ function Relatives() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [relation, setRelation] = useState("");
+  const [email, setEmail] = useState(""); // ✅ ADDED EMAIL
   const [relatives, setRelatives] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -18,6 +19,7 @@ function Relatives() {
     try {
       setLoading(true);
 
+      // ✅ FIXED ROUTE
       const res = await API.get(`/api/relatives/${patientId}`);
 
       setRelatives(res.data?.relatives || []);
@@ -31,19 +33,28 @@ function Relatives() {
 
   // ================= ADD RELATIVE =================
   const addRelative = async () => {
-    if (!name || !phone || !relation) {
+    // ✅ EMAIL ADDED TO VALIDATION
+    if (!name || !phone || !relation || !email) {
       toast.error("Please fill all fields ❌");
+      return;
+    }
+
+    // ✅ EMAIL FORMAT CHECK
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Enter valid email ❌");
       return;
     }
 
     try {
       setLoading(true);
 
-      await API.post("/relatives", {
-        patientId,
+      // ✅ FIXED ROUTE + EMAIL ADDED
+      await API.post(`/api/relatives/${patientId}`, {
         name,
         phone,
         relation,
+        email,
       });
 
       toast.success("Relative added ✅");
@@ -51,6 +62,7 @@ function Relatives() {
       setName("");
       setPhone("");
       setRelation("");
+      setEmail(""); // ✅ CLEAR EMAIL
 
       fetchRelatives();
     } catch (err) {
@@ -98,10 +110,18 @@ function Relatives() {
         />
 
         <input
-          className="w-full p-3 mb-4 rounded-xl border"
+          className="w-full p-3 mb-3 rounded-xl border"
           placeholder="Relation"
           value={relation}
           onChange={(e) => setRelation(e.target.value)}
+        />
+
+        {/* ✅ EMAIL FIELD ADDED */}
+        <input
+          className="w-full p-3 mb-4 rounded-xl border"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <button
@@ -112,7 +132,6 @@ function Relatives() {
           {loading ? "Processing..." : "Add Relative"}
         </button>
 
-        {/* OPTIONAL INFO */}
         <p className="text-center text-gray-600 mt-3 text-sm">
           You can add 1 or more emergency contacts (user choice)
         </p>
@@ -146,13 +165,13 @@ function Relatives() {
                 <h3 className="text-lg font-bold">{r.name}</h3>
                 <p>📞 {r.phone}</p>
                 <p>🧬 {r.relation}</p>
+                <p>📧 {r.email}</p> {/* ✅ SHOW EMAIL */}
               </div>
             ))}
 
           </div>
         )}
 
-        {/* ================= DASHBOARD BUTTON ================= */}
         <button
           onClick={() => {
             if (relatives.length === 0) {
