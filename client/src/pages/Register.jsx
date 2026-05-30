@@ -40,7 +40,7 @@ function Register() {
       setLoading(true);
 
       await API.post(
-        "/register",
+        "/api/auth/register",
         formData
       );
 

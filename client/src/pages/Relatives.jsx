@@ -18,7 +18,7 @@ function Relatives() {
     try {
       setLoading(true);
 
-      const res = await API.get(`/relatives/${patientId}`);
+      const res = await API.get(`/api/relatives/${patientId}`);
 
       setRelatives(res.data?.relatives || []);
     } catch (err) {
